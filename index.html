@@ -74,6 +74,23 @@
   #vopen{background:#222;color:#fff}
   #catpick{display:none;background:#111;padding:12px 14px}
   #catpick .chips{margin-top:8px}
+  /* محرر الفلاتر */
+  #editor{position:fixed;inset:0;background:#000;z-index:25;display:none;flex-direction:column}
+  #editor.on{display:flex}
+  #etop{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;padding-top:calc(12px + env(safe-area-inset-top));color:#ddd;font-size:14px}
+  #etop button{background:none;border:0;color:#fff;font-size:26px}
+  #ecv{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:0}
+  #ecv canvas{max-width:100%;max-height:100%}
+  #fl{display:flex;gap:10px;overflow-x:auto;padding:10px 14px;scrollbar-width:none}
+  .fb{flex:0 0 auto;width:74px;background:none;border:0;color:#ccc;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:5px;padding:0}
+  .fb canvas{width:66px;height:66px;border-radius:12px;border:2px solid transparent;object-fit:cover}
+  .fb.on{color:#fff;font-weight:700}
+  .fb.on canvas{border-color:var(--acc)}
+  #erow{display:flex;align-items:center;gap:10px;padding:0 16px 6px;color:#ccc;font-size:13px}
+  #erow input[type=range]{flex:1;accent-color:var(--acc)}
+  #ebar{display:flex;gap:10px;align-items:center;padding:8px 14px calc(14px + env(safe-area-inset-bottom))}
+  #ebar label{color:#bbb;font-size:12px;display:flex;align-items:center;gap:6px;flex:0 0 auto}
+  #eok{flex:1;padding:15px;border-radius:14px;border:0;background:var(--ok);color:#fff;font-size:17px;font-weight:700}
   .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#fff;color:var(--deep);padding:10px 16px;border-radius:12px;font-weight:700;z-index:30;display:none}
 </style>
 </head>
@@ -166,6 +183,13 @@
     <button id="vopen">▶️ افتح</button>
   </div>
 </div>
+<div id="editor">
+  <div id="etop"><button id="eclose">✕</button><span id="ename">فلتر: طبيعي</span><span></span></div>
+  <div id="ecv"><canvas id="ecanvas"></canvas></div>
+  <div id="erow">☀️<input type="range" id="elight" min="-30" max="30" value="0"><span id="elv">0</span></div>
+  <div id="fl"></div>
+  <div id="ebar"><label><input type="checkbox" id="eorig" checked>ارفع الأصلي كمان</label><button id="eok">✓ ارفع</button></div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -250,7 +274,92 @@ async function upload(f,name,dest,el){
     el.classList.add('done'); bar.style.width='100%'; st.textContent='اترفع ✓'; fresh[dest]=0;
   }catch(err){ st.className='st err'; st.textContent='ماترفعش: '+(err&&err.message?err.message:err); }
 }
-['ph','vd','gl'].forEach(id=>{const i=document.getElementById(id);i.onchange=()=>{add(i.files,'raw',product(),document.getElementById('note').value);i.value='';}});
+['vd','gl'].forEach(id=>{const i=document.getElementById(id);i.onchange=()=>{
+  const fs=[...i.files]; i.value='';
+  if(id==='gl' && fs.length===1 && fs[0].type.startsWith('image/')) openEditor(fs[0]);
+  else add(fs,'raw',product(),document.getElementById('note').value);
+}});
+document.getElementById('ph').onchange=e=>{ const f=e.target.files[0]; e.target.value=''; if(f) openEditor(f); };
+
+// ===== فلاتر تصوير المنتجات =====
+// كل فلتر: تصحيح تلقائي (اختياري) + فلتر ألوان + لمسة إضافية
+const FILTERS=[
+  {id:'none',  name:'طبيعي',        css:''},
+  {id:'auto',  name:'✨ تلقائي',      auto:true, css:'contrast(1.04) saturate(1.05)'},
+  {id:'studio',name:'⚪ استوديو',     auto:true, css:'brightness(1.08) contrast(1.06) saturate(0.95)', white:0.35},
+  {id:'gold',  name:'🏆 دهبي',       auto:true, css:'brightness(1.04) contrast(1.12) saturate(1.35)', warm:10},
+  {id:'glass', name:'💎 كريستال',    auto:true, css:'brightness(1.07) contrast(1.16) saturate(0.9)', cool:10},
+  {id:'paper', name:'📄 ورق ومذكرات', auto:true, css:'brightness(1.1) contrast(1.22) saturate(1.05)', white:0.25},
+  {id:'vivid', name:'🎨 ألوان قوية',  auto:true, css:'contrast(1.1) saturate(1.45)'},
+  {id:'warm',  name:'🌙 دافي',       css:'brightness(1.03) saturate(1.12) sepia(0.14)'},
+];
+let ebmp=null, efile=null, efilter=FILTERS[2], elight=0, estats=null;
+async function loadBitmap(f){ try{ return await createImageBitmap(f,{imageOrientation:'from-image'}); }catch(e){ return await createImageBitmap(f); } }
+function scaled(bmp,max){ const s=Math.min(1,max/Math.max(bmp.width,bmp.height)); const c=document.createElement('canvas'); c.width=Math.round(bmp.width*s); c.height=Math.round(bmp.height*s); c.getContext('2d').drawImage(bmp,0,0,c.width,c.height); return c; }
+// نحسب التصحيح التلقائي مرة واحدة من نسخة صغيرة: مستويات الأبيض والأسود + توازن الأبيض
+function computeStats(c){
+  const d=c.getContext('2d').getImageData(0,0,c.width,c.height).data; const hist=new Uint32Array(256); let r=0,g=0,b=0,n=0;
+  for(let i=0;i<d.length;i+=16){ const y=(d[i]*0.299+d[i+1]*0.587+d[i+2]*0.114)|0; hist[y]++; r+=d[i]; g+=d[i+1]; b+=d[i+2]; n++; }
+  let acc=0, lo=0, hi=255; for(let v=0;v<256;v++){ acc+=hist[v]; if(acc>n*0.005){lo=v;break;} }
+  acc=0; for(let v=255;v>=0;v--){ acc+=hist[v]; if(acc>n*0.005){hi=v;break;} }
+  const avg=(r+g+b)/3/n; return {lo:Math.min(lo,60), hi:Math.max(hi,180), wr:avg/(r/n), wg:avg/(g/n), wb:avg/(b/n)};
+}
+function render(src, f, light, st){
+  const c=document.createElement('canvas'); c.width=src.width; c.height=src.height; const x=c.getContext('2d');
+  x.filter=(f.css+(light?' brightness('+(1+light/100)+')':'')).trim()||'none'; x.drawImage(src,0,0); x.filter='none';
+  if(f.auto||f.white||f.warm||f.cool){
+    const im=x.getImageData(0,0,c.width,c.height), d=im.data;
+    const lut=[new Uint8ClampedArray(256),new Uint8ClampedArray(256),new Uint8ClampedArray(256)];
+    const wb=f.auto? [Math.min(Math.max(st.wr,0.85),1.18),Math.min(Math.max(st.wg,0.85),1.18),Math.min(Math.max(st.wb,0.85),1.18)]:[1,1,1];
+    const shift=[ (f.warm||0)-(f.cool||0), 0, (f.cool||0)-(f.warm||0) ];
+    for(let ch=0;ch<3;ch++) for(let v=0;v<256;v++){
+      let y=v*wb[ch]+shift[ch];
+      if(f.auto) y=(y-st.lo)*255/(st.hi-st.lo);
+      if(f.white){ const t=Math.max(0,(y-170)/85); y=y+(255-y)*t*f.white; } // تبييض الخلفية الفاتحة
+      lut[ch][v]=y;
+    }
+    for(let i=0;i<d.length;i+=4){ d[i]=lut[0][d[i]]; d[i+1]=lut[1][d[i+1]]; d[i+2]=lut[2][d[i+2]]; }
+    x.putImageData(im,0,0);
+  }
+  return c;
+}
+let eprev=null;
+function drawEditor(){
+  const out=render(eprev,efilter,elight,estats), cv=document.getElementById('ecanvas');
+  cv.width=out.width; cv.height=out.height; cv.getContext('2d').drawImage(out,0,0);
+  document.getElementById('ename').textContent='فلتر: '+efilter.name.replace(/^\S+\s/,'');
+  document.querySelectorAll('.fb').forEach(b=>b.classList.toggle('on',b.dataset.id===efilter.id));
+}
+async function openEditor(f){
+  efile=f; ebmp=await loadBitmap(f); eprev=scaled(ebmp,1100); estats=computeStats(scaled(ebmp,300));
+  efilter=FILTERS.find(x=>x.id===(store('lastFilter')||'studio'))||FILTERS[2]; elight=0;
+  document.getElementById('elight').value=0; document.getElementById('elv').textContent='0';
+  const fl=document.getElementById('fl'); fl.innerHTML=''; const tiny=scaled(ebmp,160);
+  FILTERS.forEach(ft=>{ const b=document.createElement('button'); b.className='fb'; b.dataset.id=ft.id;
+    const cv=render(tiny,ft,0,estats); cv.removeAttribute('style'); b.appendChild(cv); b.append(ft.name.replace(/^\S+\s/,'')||ft.name);
+    b.onclick=()=>{efilter=ft; drawEditor();}; fl.appendChild(b); });
+  document.getElementById('editor').classList.add('on'); drawEditor();
+}
+document.getElementById('elight').oninput=e=>{ elight=+e.target.value; document.getElementById('elv').textContent=(elight>0?'+':'')+elight; drawEditor(); };
+document.getElementById('eclose').onclick=()=>{ document.getElementById('editor').classList.remove('on'); ebmp=null; };
+document.getElementById('eok').onclick=async()=>{
+  const btn=document.getElementById('eok'); btn.disabled=true; btn.textContent='بيجهّز الصورة...';
+  try{
+    const note=document.getElementById('note').value, files=[];
+    if(efilter.id==='none' && !elight) files.push(efile);
+    else{
+      const full=render(scaled(ebmp,3200),efilter,elight,estats);
+      const blob=await new Promise(r=>full.toBlob(r,'image/jpeg',0.92));
+      files.push(new File([blob],'filtered.jpg',{type:'image/jpeg'}));
+      if(document.getElementById('eorig').checked) files.push(efile);
+      store('lastFilter',efilter.id);
+    }
+    document.getElementById('editor').classList.remove('on');
+    add([files[0]],'raw',product(),[note,efilter.id!=='none'?'فلتر '+efilter.name.replace(/^\S+\s/,''):''].filter(Boolean).join(' '));
+    if(files[1]) add([files[1]],'raw',product(),[note,'أصلي'].filter(Boolean).join(' '));
+  }catch(e){ toast('حصل خطأ في الفلتر، هرفع الأصلي'); add([efile],'raw',product(),document.getElementById('note').value); document.getElementById('editor').classList.remove('on'); }
+  btn.disabled=false; btn.textContent='✓ ارفع'; ebmp=null;
+};
 document.getElementById('dz').onchange=e=>{add(e.target.files,'designs',dtype(),document.getElementById('dnote').value);e.target.value='';};
 
 // ===== شبكة صور =====
