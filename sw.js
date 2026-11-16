@@ -1,5 +1,5 @@
 // كاميرا المحل: يستقبل الملفات اللي بتتشارك من واتساب أو الاستوديو، ويخلي التطبيق يفتح من غير نت
-var CACHE = "cam-v2";
+var CACHE = "cam-v3";
 var SHARED = "cam-shared";
 
 self.addEventListener("install", function (e) {

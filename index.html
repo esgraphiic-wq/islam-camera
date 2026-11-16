@@ -19,7 +19,8 @@
   .sub{color:#b9cdea;font-size:13px;margin-top:2px}
   .lbl{font-size:13px;color:#b9cdea;margin:14px 0 8px}
   .chips{display:flex;flex-wrap:wrap;gap:8px}
-  .chip{border:1px solid var(--line);background:var(--card);color:#fff;border-radius:999px;padding:9px 14px;font-size:15px}
+  .chips.scroll{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+  .chip{border:1px solid var(--line);background:var(--card);color:#fff;border-radius:999px;padding:9px 14px;font-size:15px;white-space:nowrap}
   .chip.on{background:var(--acc);border-color:var(--acc);color:var(--deep);font-weight:700}
   input[type=text]{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:#fff;font-size:16px}
   .big{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
@@ -39,23 +40,41 @@
   summary{font-weight:700}
   details li{margin:6px 0;color:#d6e4f6;font-size:14px}
   .page{display:none}.page.on{display:block}
-  nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:#031a44;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
-  nav button{flex:1;background:none;border:0;color:#9fb6d9;font-size:13px;padding:10px 0 12px;display:flex;flex-direction:column;align-items:center;gap:2px}
-  nav button b{font-size:22px;font-weight:400}
+  nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:#031a44;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);z-index:5}
+  nav button{flex:1;background:none;border:0;color:#9fb6d9;font-size:12px;padding:9px 0 11px;display:flex;flex-direction:column;align-items:center;gap:2px}
+  nav button b{font-size:21px;font-weight:400}
   nav button.on{color:#fff}
   nav button.on b{filter:drop-shadow(0 0 6px var(--acc))}
   .hint{background:var(--card);border:1px dashed var(--line);border-radius:14px;padding:12px 14px;margin-top:14px;font-size:14px;color:#d6e4f6}
   .seg{display:flex;gap:8px;margin-top:14px}
   .seg button{flex:1;padding:10px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:#fff;font-size:15px}
   .seg button.on{background:var(--acc);color:var(--deep);font-weight:700;border-color:var(--acc)}
-  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
-  .cell{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:28px;text-decoration:none;color:#fff}
+  .row{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:12px}
+  .small{background:var(--card);border:1px solid var(--line);color:#fff;border-radius:10px;padding:8px 12px;font-size:13px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+  .cell{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff;border:0;padding:0}
   .cell img{width:100%;height:100%;object-fit:cover}
-  .cell span{position:absolute;bottom:0;left:0;right:0;font-size:10px;padding:3px 5px;background:linear-gradient(transparent,rgba(0,0,0,.75));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cell .vid{position:absolute;top:6px;left:6px;font-size:14px;background:rgba(0,0,0,.55);border-radius:8px;padding:2px 6px}
   .day{font-size:13px;color:#b9cdea;margin:16px 0 0}
-  .empty{color:#b9cdea;text-align:center;margin-top:30px;font-size:14px}
+  .empty{color:#b9cdea;text-align:center;margin-top:30px;font-size:14px;line-height:1.7}
+  .stamp{font-size:12px;color:#8fa8cf}
   .sharebox{display:none;background:#123a7a;border-radius:16px;padding:14px;margin-top:14px}
   .sharebox .seg button{font-size:16px;padding:14px}
+  /* العارض */
+  #viewer{position:fixed;inset:0;background:#000;z-index:20;display:none;flex-direction:column}
+  #viewer.on{display:flex}
+  #vimg{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:pan-y}
+  #vimg img{max-width:100%;max-height:100%;object-fit:contain}
+  #vtop{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;padding-top:calc(12px + env(safe-area-inset-top));color:#ddd;font-size:13px}
+  #vtop button{background:none;border:0;color:#fff;font-size:26px}
+  #vbar{display:flex;gap:10px;padding:12px 14px calc(14px + env(safe-area-inset-bottom))}
+  #vbar button{flex:1;padding:14px 8px;border-radius:14px;border:0;font-size:15px;font-weight:700}
+  #vshare{background:var(--ok);color:#fff}
+  #vcat{background:#fff;color:var(--deep)}
+  #vopen{background:#222;color:#fff}
+  #catpick{display:none;background:#111;padding:12px 14px}
+  #catpick .chips{margin-top:8px}
+  .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#fff;color:var(--deep);padding:10px 16px;border-radius:12px;font-weight:700;z-index:30;display:none}
 </style>
 </head>
 <body>
@@ -65,7 +84,6 @@
   <div class="warn" id="warn">التطبيق لسه مش متفعّل. افتحه مرة من اللينك اللي فيه المفتاح.</div>
   <button class="install" id="install">⬇️ ثبّت التطبيق على الموبايل</button>
 
-  <!-- ملفات جاية من المشاركة -->
   <div class="sharebox" id="sharebox">
     <div id="shareMsg" style="font-weight:700"></div>
     <div class="seg">
@@ -104,7 +122,7 @@
     <div class="lbl">نوع التصميم</div>
     <div class="chips" id="dchips"></div>
     <div class="lbl">ملاحظة (اختياري)</div>
-    <input type="text" id="dnote" placeholder="مثلاً: حطه على مج وكيس، أو: متنزلش اسم العميل">
+    <input type="text" id="dnote" placeholder="مثلاً: حطه على مج وكيس">
     <div class="big">
       <label class="btn wide" style="height:116px;font-size:18px;background:#fff;color:var(--deep)">🎨 اختار التصميمات<input type="file" accept="image/*,application/pdf,.ai,.psd,.svg,.eps,.cdr" multiple id="dz"></label>
     </div>
@@ -116,7 +134,16 @@
       <button data-d="raw" class="on">📦 الخام</button>
       <button data-d="designs">🎨 التصميمات</button>
     </div>
-    <div id="gallery"><div class="empty">بيحمّل...</div></div>
+    <div class="row"><span class="stamp" id="gstamp"></span><button class="small" id="grefresh">↻ تحديث</button></div>
+    <div id="gallery"></div>
+  </section>
+
+  <!-- الكتالوج -->
+  <section class="page" id="p-catalog">
+    <div class="chips scroll" id="ccats"></div>
+    <div class="row"><span class="stamp" id="cstamp"></span>
+      <span style="display:flex;gap:6px"><button class="small" id="coffline">⬇️ حمّله للاستخدام من غير نت</button><button class="small" id="crefresh">↻</button></span></div>
+    <div id="catalog"></div>
   </section>
 
   <div id="list"></div>
@@ -126,18 +153,33 @@
   <button data-p="p-shoot" class="on"><b>📷</b>تصوير</button>
   <button data-p="p-design"><b>🎨</b>تصميمات</button>
   <button data-p="p-gallery"><b>🖼️</b>المعرض</button>
+  <button data-p="p-catalog"><b>📒</b>الكتالوج</button>
 </nav>
 
+<div id="viewer">
+  <div id="vtop"><button id="vclose">✕</button><span id="vname"></span><span id="vcount"></span></div>
+  <div id="vimg"></div>
+  <div id="catpick"><div style="color:#ccc;font-size:13px">يتحط في أنهي قسم في الكتالوج؟</div><div class="chips" id="vcats"></div></div>
+  <div id="vbar">
+    <button id="vshare">📤 ابعت للعميل</button>
+    <button id="vcat">📒 للكتالوج</button>
+    <button id="vopen">▶️ افتح</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
 <script>
-const API = 'https://script.google.com/macros/s/AKfycbwDqC3yBX4M6LTjRPJX1z-IXKuSZgMBd4C5XoAstT4JB_IdTdHYvjxUuHfyT4_Onr98/exec';
+const API = 'https://script.google.com/macros/s/AKfycbx_aYiuE5gRihMnBz0t1jQZWeufsXQ8E7MVAqQdS-6SUidRFmkqumhF0G327aygeB20/exec';
 const CHUNK = 4 * 1024 * 1024; // مضاعف 256KB
 const PRODUCTS = ['مذكرات','دروع','كؤوس','ميداليات','بادجات','شهادات','أجندات','نوت بوك','مجات','هدايا','لافتات','تصوير المكن','من عميل','أخرى'];
 const DTYPES = ['لوجو','غلاف مذكرة','شهادة','بادج','درع','مج','نوت بوك','كارت','بوستر','أخرى'];
+const CATS = ['كؤوس ودروع وميداليات','مذكرات وكتب','بادجات','أجندات ونوت بوك','شهادات','هدايا ومجات','لافتات','شغل الشركات'];
 
 function store(k,v){try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k,v);}catch(e){return null}}
 (function(){const m=location.hash.match(/k=([A-Za-z0-9_-]+)/); if(m){store('camKey',m[1]); history.replaceState(null,'',location.pathname+location.search);}})();
 const KEY = store('camKey');
 if(!KEY) document.getElementById('warn').style.display='block';
+function toast(t){const e=document.getElementById('toast');e.textContent=t;e.style.display='block';clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',2200);}
 
 if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
 let deferred=null; const ib=document.getElementById('install');
@@ -145,16 +187,17 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;
 ib.onclick=async()=>{ if(!deferred) return; deferred.prompt(); await deferred.userChoice; deferred=null; ib.style.display='none'; };
 
 // تبويبات
-const SUBS={'p-shoot':'صوّر وهيترفع لوحده على الدرايف بتاريخ النهارده','p-design':'تصميماتك اللي هتتعمل موك أب','p-gallery':'آخر حاجات اترفعت'};
+const SUBS={'p-shoot':'صوّر وهيترفع لوحده على الدرايف بتاريخ النهارده','p-design':'تصميماتك اللي هتتعمل موك أب','p-gallery':'كل اللي اترفع','p-catalog':'اعرض شغلك على العميل'};
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));
   document.querySelectorAll('.page').forEach(p=>p.classList.toggle('on',p.id===b.dataset.p));
   document.getElementById('sub').textContent=SUBS[b.dataset.p];
-  if(b.dataset.p==='p-gallery') loadGallery();
+  if(b.dataset.p==='p-gallery') showGallery();
+  if(b.dataset.p==='p-catalog') showCatalog();
 });
 
-function chipset(el,list){ let val=''; list.forEach(p=>{const b=document.createElement('button');b.className='chip';b.textContent=p;
-  b.onclick=()=>{val=val===p?'':p;[...el.children].forEach(c=>c.classList.toggle('on',c.textContent===val));};el.appendChild(b);}); return ()=>val; }
+function chipset(el,list,onchange){ let val=''; list.forEach(p=>{const b=document.createElement('button');b.className='chip';b.textContent=p;
+  b.onclick=()=>{val=val===p?'':p;[...el.children].forEach(c=>c.classList.toggle('on',c.textContent===val)); onchange&&onchange(val);};el.appendChild(b);}); return ()=>val; }
 const product = chipset(document.getElementById('chips'),PRODUCTS);
 const dtype = chipset(document.getElementById('dchips'),DTYPES);
 
@@ -163,11 +206,19 @@ function stamp(){const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+
 function clean(s){return (s||'').replace(/[\\/:*?"<>|]/g,' ').replace(/\s+/g,' ').trim()}
 function ext(f){const m=(f.name||'').match(/\.[A-Za-z0-9]+$/);if(m)return m[0].toLowerCase();return (f.type||'').startsWith('video')?'.mp4':'.jpg'}
 function b64(blob){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(blob)})}
+function fromB64(s,type){const bin=atob(s);const a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return new Blob([a],{type})}
 async function api(body){
   const r = await fetch(API,{method:'POST',body:JSON.stringify(Object.assign({k:KEY},body)),credentials:'omit'});
   const j = await r.json(); if(j.error) throw new Error(j.error); return j;
 }
+// تخزين على الموبايل عشان المعرض والكتالوج يفتحوا على طول ومن غير نت
+async function cget(key){ try{ const c=await caches.open('cam-data'); const r=await c.match('./_data/'+key); return r? r.json():null; }catch(e){return null} }
+async function cput(key,obj){ try{ const c=await caches.open('cam-data'); await c.put('./_data/'+key,new Response(JSON.stringify(obj))); }catch(e){} }
+async function iget(id){ try{ const c=await caches.open('cam-img'); const r=await c.match('./_img/'+id); return r? r.blob():null; }catch(e){return null} }
+async function iput(id,blob){ try{ const c=await caches.open('cam-img'); await c.put('./_img/'+id,new Response(blob)); }catch(e){} }
+function ago(t){ if(!t) return ''; const m=Math.round((Date.now()-t)/60000); return m<1?'محدّث دلوقتي':m<60?'آخر تحديث من '+m+' دقيقة':'آخر تحديث من '+Math.round(m/60)+' ساعة'; }
 
+// ===== الرفع =====
 let queue = Promise.resolve(); let n = 0;
 function add(files, dest, tag, note){
   [...files].forEach(f => {
@@ -196,34 +247,118 @@ async function upload(f,name,dest,el){
         const p=Math.round(s/f.size*100); bar.style.width=p+'%'; st.textContent='بيترفع... '+p+'%';
       }catch(err){ if(++tries>4) throw err; st.textContent='النت فصل، بحاول تاني...'; await new Promise(r=>setTimeout(r,3000)); }
     }
-    el.classList.add('done'); bar.style.width='100%'; st.textContent='اترفع ✓'; galleryStale=true;
+    el.classList.add('done'); bar.style.width='100%'; st.textContent='اترفع ✓'; fresh[dest]=0;
   }catch(err){ st.className='st err'; st.textContent='ماترفعش: '+(err&&err.message?err.message:err); }
 }
 ['ph','vd','gl'].forEach(id=>{const i=document.getElementById(id);i.onchange=()=>{add(i.files,'raw',product(),document.getElementById('note').value);i.value='';}});
 document.getElementById('dz').onchange=e=>{add(e.target.files,'designs',dtype(),document.getElementById('dnote').value);e.target.value='';};
 
-// المعرض
-let gdest='raw', galleryStale=true;
-document.querySelectorAll('#gseg button').forEach(b=>b.onclick=()=>{gdest=b.dataset.d;document.querySelectorAll('#gseg button').forEach(x=>x.classList.toggle('on',x===b));galleryStale=true;loadGallery();});
-async function loadGallery(){
-  if(!galleryStale) return; galleryStale=false;
-  const g=document.getElementById('gallery'); g.innerHTML='<div class="empty">بيحمّل...</div>';
-  if(!KEY){ g.innerHTML='<div class="empty">التطبيق مش متفعّل</div>'; return; }
-  try{
-    const {items}=await api({op:'list',dest:gdest,limit:30});
-    if(!items.length){ g.innerHTML='<div class="empty">لسه مفيش حاجة هنا</div>'; return; }
-    g.innerHTML=''; let day='', grid=null;
-    items.forEach(it=>{
-      if(it.day!==day){ day=it.day; const h=document.createElement('div'); h.className='day'; h.textContent=day; g.appendChild(h); grid=document.createElement('div'); grid.className='grid'; g.appendChild(grid); }
-      const a=document.createElement('a'); a.className='cell'; a.href=it.url; a.target='_blank'; a.rel='noopener';
-      if(it.thumb){ const im=document.createElement('img'); im.src='data:image/png;base64,'+it.thumb; im.alt=''; a.appendChild(im); }
-      else a.append(it.mime.startsWith('video')?'🎥':(it.mime.includes('pdf')?'📄':'🖼️'));
-      const s=document.createElement('span'); s.textContent=it.name; a.appendChild(s); grid.appendChild(a);
-    });
-  }catch(err){ g.innerHTML='<div class="empty err">مقدرتش أجيب المعرض: '+(err.message||err)+'</div>'; galleryStale=true; }
+// ===== شبكة صور =====
+function cell(it, onclick){
+  const a=document.createElement('button'); a.className='cell';
+  if(it.thumb){ const im=document.createElement('img'); im.loading='lazy'; im.src='data:image/jpeg;base64,'+it.thumb; im.alt=''; a.appendChild(im); }
+  else a.append(it.mime.startsWith('video')?'🎥':(it.mime.includes('pdf')?'📄':'🖼️'));
+  if(it.mime.startsWith('video')){ const v=document.createElement('span'); v.className='vid'; v.textContent='▶ فيديو'; a.appendChild(v); }
+  a.onclick=onclick; return a;
+}
+const fresh={raw:0,designs:0,catalog:0};
+
+// ===== المعرض =====
+let gdest='raw';
+document.querySelectorAll('#gseg button').forEach(b=>b.onclick=()=>{gdest=b.dataset.d;document.querySelectorAll('#gseg button').forEach(x=>x.classList.toggle('on',x===b));showGallery();});
+document.getElementById('grefresh').onclick=()=>{fresh[gdest]=0;showGallery(true)};
+function renderGallery(data){
+  const g=document.getElementById('gallery'); g.innerHTML='';
+  document.getElementById('gstamp').textContent=ago(data&&data.t);
+  if(!data||!data.items.length){ g.innerHTML='<div class="empty">لسه مفيش حاجة هنا.<br>صوّر من تبويب «تصوير» وهتظهر هنا.</div>'; return; }
+  let day='', grid=null;
+  data.items.forEach((it,i)=>{
+    const d=(it.time||'').slice(0,10);
+    if(d!==day){ day=d; const h=document.createElement('div'); h.className='day'; h.textContent=d; g.appendChild(h); grid=document.createElement('div'); grid.className='grid'; g.appendChild(grid); }
+    grid.appendChild(cell(it,()=>openViewer(data.items,i,'gallery')));
+  });
+}
+async function showGallery(force){
+  const key='list-'+gdest; const cached=await cget(key);
+  if(cached) renderGallery(cached); else document.getElementById('gallery').innerHTML='<div class="empty">بيحمّل...</div>';
+  if(!KEY) return;
+  if(!force && cached && fresh[gdest] && Date.now()-cached.t<60000) return;
+  try{ const {items}=await api({op:'list',dest:gdest,limit:45}); const data={t:Date.now(),items}; await cput(key,data); fresh[gdest]=1; if(key==='list-'+gdest) renderGallery(data); }
+  catch(err){ if(!cached) document.getElementById('gallery').innerHTML='<div class="empty err">مفيش نت أو حصل خطأ: '+(err.message||err)+'</div>'; else toast('مفيش نت، بعرض آخر نسخة'); }
 }
 
-// ملفات جاية من المشاركة (واتساب / الاستوديو / الملفات)
+// ===== الكتالوج =====
+let ccat='الكل', cdata=null;
+function renderCatalog(){
+  const box=document.getElementById('catalog'), cats=document.getElementById('ccats');
+  document.getElementById('cstamp').textContent=ago(cdata&&cdata.t);
+  if(!cdata||!cdata.cats.some(c=>c.items.length)){ cats.innerHTML=''; box.innerHTML='<div class="empty">الكتالوج لسه فاضي.<br>افتح أي صورة في «المعرض» ودوس «📒 للكتالوج»،<br>أو سيبها عليّا وأنا هظبّط الصور وأحطها هنا.</div>'; return; }
+  const names=['الكل',...cdata.cats.filter(c=>c.items.length).map(c=>c.name)];
+  if(!names.includes(ccat)) ccat='الكل';
+  cats.innerHTML=''; names.forEach(nm=>{const b=document.createElement('button');b.className='chip'+(nm===ccat?' on':'');b.textContent=nm;b.onclick=()=>{ccat=nm;renderCatalog();};cats.appendChild(b);});
+  box.innerHTML='';
+  cdata.cats.filter(c=>c.items.length&&(ccat==='الكل'||c.name===ccat)).forEach(c=>{
+    const h=document.createElement('div'); h.className='day'; h.textContent=c.name+' ('+c.items.length+')'; box.appendChild(h);
+    const grid=document.createElement('div'); grid.className='grid'; box.appendChild(grid);
+    c.items.forEach((it,i)=>grid.appendChild(cell(it,()=>openViewer(c.items,i,'catalog'))));
+  });
+}
+async function showCatalog(force){
+  cdata=await cget('catalog'); renderCatalog(); if(!cdata) document.getElementById('catalog').innerHTML='<div class="empty">بيحمّل...</div>';
+  if(!KEY) return;
+  if(!force && cdata && fresh.catalog && Date.now()-cdata.t<60000) return;
+  try{ const {cats}=await api({op:'catalog'}); cdata={t:Date.now(),cats}; await cput('catalog',cdata); fresh.catalog=1; renderCatalog(); }
+  catch(err){ if(!cdata) document.getElementById('catalog').innerHTML='<div class="empty err">مفيش نت أو حصل خطأ</div>'; else toast('مفيش نت، بعرض آخر نسخة'); }
+}
+document.getElementById('crefresh').onclick=()=>showCatalog(true);
+document.getElementById('coffline').onclick=async(e)=>{
+  if(!cdata) return; const all=cdata.cats.flatMap(c=>c.items).filter(i=>!i.mime.startsWith('video'));
+  let k=0; e.target.disabled=true;
+  for(const it of all){ k++; e.target.textContent='⬇️ '+k+'/'+all.length; if(!(await iget(it.id))){ try{ await bigBlob(it); }catch(err){} } }
+  e.target.textContent='✓ الكتالوج متحمّل على الموبايل'; e.target.disabled=false;
+};
+
+// ===== العارض =====
+let vlist=[], vi=0, vmode='gallery', vblob=null;
+async function bigBlob(it){
+  let b=await iget(it.id); if(b) return b;
+  const r=await api({op:'image',id:it.id}); b=fromB64(r.b64,r.mime); await iput(it.id,b); return b;
+}
+async function showV(){
+  const it=vlist[vi]; vblob=null;
+  document.getElementById('vname').textContent=it.name.replace(/^\d{4}-\d\d-\d\d_[\d-]+_?/,'')||it.name.slice(0,16);
+  document.getElementById('vcount').textContent=(vi+1)+' / '+vlist.length;
+  const box=document.getElementById('vimg'); box.innerHTML='';
+  const im=document.createElement('img'); if(it.thumb) im.src='data:image/jpeg;base64,'+it.thumb; box.appendChild(im);
+  document.getElementById('vcat').style.display=vmode==='gallery'?'':'none';
+  document.getElementById('vopen').style.display=it.mime.startsWith('video')?'':'none';
+  document.getElementById('catpick').style.display='none';
+  if(!it.mime.startsWith('video')){ try{ const b=await bigBlob(it); if(vlist[vi]===it){ vblob=b; im.src=URL.createObjectURL(b);} }catch(e){} }
+}
+function openViewer(list,i,mode){ vlist=list; vi=i; vmode=mode; document.getElementById('viewer').classList.add('on'); showV(); }
+document.getElementById('vclose').onclick=()=>document.getElementById('viewer').classList.remove('on');
+let sx=null; const vimg=document.getElementById('vimg');
+vimg.addEventListener('touchstart',e=>sx=e.touches[0].clientX,{passive:true});
+vimg.addEventListener('touchend',e=>{ if(sx===null) return; const dx=e.changedTouches[0].clientX-sx; sx=null;
+  if(Math.abs(dx)>50){ vi=(vi+(dx<0?-1:1)+vlist.length)%vlist.length; showV(); } });
+document.getElementById('vopen').onclick=()=>{ const it=vlist[vi]; if(it.url) window.open(it.url,'_blank'); };
+document.getElementById('vshare').onclick=async()=>{
+  const it=vlist[vi];
+  try{
+    if(it.mime.startsWith('video')){ if(it.url) window.open(it.url,'_blank'); toast('الفيديو بيتبعت من درايف'); return; }
+    const b=vblob||await bigBlob(it); const f=new File([b],'إسلام-جرافيك-'+(vi+1)+'.jpg',{type:b.type||'image/jpeg'});
+    if(navigator.canShare&&navigator.canShare({files:[f]})) await navigator.share({files:[f],text:'إسلام جرافيك للدعاية والتسويق - واتساب 01032224478'});
+    else toast('الموبايل ده مش بيدعم المشاركة');
+  }catch(e){ if(e.name!=='AbortError') toast('مقدرتش أجهّز الصورة'); }
+};
+const vcats=document.getElementById('vcats');
+CATS.forEach(c=>{const b=document.createElement('button');b.className='chip';b.textContent=c;b.onclick=async()=>{
+  document.getElementById('catpick').style.display='none';
+  try{ await api({op:'tocat',id:vlist[vi].id,cat:c}); fresh.catalog=0; toast('اتحطت في الكتالوج ✓'); }catch(e){ toast('حصل خطأ، جرّب تاني'); }
+};vcats.appendChild(b);});
+document.getElementById('vcat').onclick=()=>{const p=document.getElementById('catpick');p.style.display=p.style.display==='block'?'none':'block';};
+
+// ===== ملفات جاية من المشاركة =====
 (async function(){
   if(!/[?&]shared=/.test(location.search) || !('caches' in window)) return;
   history.replaceState(null,'',location.pathname);
