@@ -4,26 +4,50 @@
   "description": "صوّر أو شارك صور وفيديوهات وتترفع على الدرايف في فولدر بتاريخ اليوم",
   "lang": "ar",
   "dir": "rtl",
-  "start_url": "./",
-  "scope": "./",
-  "id": "./",
+  "start_url": "/islam-camera/",
+  "scope": "/islam-camera/",
+  "id": "/islam-camera/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#002157",
   "theme_color": "#002157",
   "icons": [
-    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
-    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
-    {"src": "icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ],
   "share_target": {
-    "action": "./share",
+    "action": "/islam-camera/share",
     "method": "POST",
     "enctype": "multipart/form-data",
     "params": {
       "title": "title",
       "text": "text",
-      "files": [{"name": "media", "accept": ["image/*", "video/*", "application/pdf"]}]
+      "files": [
+        {
+          "name": "media",
+          "accept": [
+            "image/*",
+            "video/*",
+            "application/pdf"
+          ]
+        }
+      ]
     }
   }
 }
